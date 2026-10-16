@@ -10,18 +10,18 @@ from promptsense.scoring import analyze
 
 
 def _load_dotenv(path=os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")):
-    """Tiny .env reader: KEY=value lines; real environment variables win."""
+    """Tiny .env reader: KEY=value lines; .env values take precedence."""
     if os.path.exists(path):
         for line in open(path, encoding="utf-8-sig"):
             line = line.strip()
             if line and not line.startswith("#") and "=" in line:
                 k, v = line.split("=", 1)
-                os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
+                os.environ[k.strip()] = v.strip().strip('"').strip("'")
 
 
 _load_dotenv()
 app = Flask(__name__, static_folder="static")
-ANSWER_TOKENS = 1000  # same output cap as the research notebook
+ANSWER_TOKENS = 10000  # same output cap as the research notebook
 SHOW_OUTPUTS = True  # False = prompt-quality analysis only (no answer/judge calls). Set True for outputs + scores.
 
 
@@ -29,9 +29,13 @@ class GeminiClient:
     """Adapter so Gemini satisfies PromptSense's LLMClient protocol."""
     def __init__(self, model=None, api_key=None):
         from google import genai
-        key = api_key or os.getenv("GEMINI_API_KEY") or "AIzaSyAJul-6QIFt0eTKe4BDYM934TXYrgyyFuA"
-        if not key:
-            raise RuntimeError("No Gemini key found. Put GEMINI_API_KEY=your_key in a .env file next to app.py, then restart.")
+        key = api_key or os.getenv("GEMINI_API_KEY")
+        if not key or key.startswith("AQ."):
+            raise RuntimeError(
+                "Gemini API key is missing or invalid. "
+                "Please create a valid API key at https://aistudio.google.com/app/apikey "
+                "and set GEMINI_API_KEY=your_key in your .env file (or switch to Qwen / Nemotron)."
+            )
         self._client = genai.Client(api_key=key)
         self.model = model or os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
 
