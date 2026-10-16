@@ -4,24 +4,23 @@
 
 ---
 
-## ✨ Features
+## Features
 
-- **⚡ Prompt Quality Scoring (PQS, 0–100)**: Instant heuristic evaluation across 6 core prompt engineering dimensions without requiring slow or expensive LLM calls:
+- ** Prompt Quality Scoring (PQS, 0–100)**: Instant heuristic evaluation across 6 core prompt engineering dimensions without requiring slow or expensive LLM calls:
   - **Clarity**: Directness, readability, and sentence flow.
   - **Specificity**: Concrete details, parameters, and entities.
   - **Context**: Domain background, persona, and situational framing.
   - **Task Definition**: Actionable verbs and clear deliverable definition.
   - **Constraints**: Format, length, styling, and behavioral rules.
   - **Low Ambiguity**: Absence of vague qualifiers or conflicting instructions.
-- **🎯 Intent-Preserving Refinement**: Automatically strengthens weak dimensions while strictly preserving your ground-truth intent (no hallucinated requirements or altered objectives).
-- **⚖️ Side-by-Side Model Execution**: Executes both the original prompt and the refined prompt in parallel using high-performance LLMs.
-- **🧑‍⚖️ Blind A/B LLM Judge**: Evaluates both generated answers against your original request using randomized positions and explicit bias controls (no length or formatting bias) across five criteria:
+- ** Intent-Preserving Refinement**: Automatically strengthens weak dimensions while strictly preserving your ground-truth intent (no hallucinated requirements or altered objectives).
+- ** Side-by-Side Model Execution**: Executes both the original prompt and the refined prompt in parallel using high-performance LLMs.
+- ** Blind A/B LLM Judge**: Evaluates both generated answers against your original request using randomized positions and explicit bias controls (no length or formatting bias) across five criteria:
   - *Relevance*, *Clarity*, *Completeness*, *Instruction Adherence*, and *Overall Quality* (1–5 scale).
-- **🌐 Multi-Model & Multi-Provider Support**:
+- ** Multi-Model & Multi-Provider Support**:
   - **Google Gemini** (via `google-genai` SDK, defaults to `gemini-3.5-flash-lite`).
   - **Qwen 3.8 27B** (via OpenRouter).
   - **NVIDIA Nemotron 3 Ultra** (via OpenRouter).
-  - **Demo Mode**: Zero-key offline mode for testing the UI and heuristic engine.
 
 ---
 
@@ -41,7 +40,7 @@ Create a `.env` file in the project root directory (next to `app.py`):
 
 ```env
 # Google Gemini (from https://aistudio.google.com/app/apikey)
-GEMINI_API_KEY=AIzaSyYourGeminiApiKeyHere
+GEMINI_API_KEY=paste key here
 GEMINI_MODEL=gemini-3.5-flash-lite
 
 # OpenRouter (for Qwen and NVIDIA Nemotron)
@@ -63,7 +62,7 @@ Open your browser at **`http://127.0.0.1:5000`**.
 
 ---
 
-## 💻 CLI Usage
+## CLI Usage
 
 You can also run PromptSense directly from your terminal:
 
@@ -80,7 +79,7 @@ python -m promptsense "explain quantum computing" --llm-refiner
 
 ---
 
-## 🏗️ Architecture & Pipeline
+## Architecture & Pipeline
 
 ```text
 User Input
@@ -109,7 +108,7 @@ User Input
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```text
 ├── app.py                      # Flask web application & LLM adapters (Gemini, OpenRouter)
@@ -138,14 +137,10 @@ User Input
 
 ---
 
-## 🔒 Security Best Practices
+## Security Best Practices
 
 - Store API keys exclusively in `.env` or pass them via runtime environment variables.
 - Never hardcode API keys into `.py` or commit them to Git.
 - Google AI Studio automatically revokes leaked keys if pushed to public repositories.
 
 ---
-
-## 📄 License
-
-Academic and practical use under MIT License. Contributions and feedback are welcome!
