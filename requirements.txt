@@ -1,0 +1,4 @@
+flask>=3.0
+google-genai        # Gemini (used in your research notebook)
+
+requests>=2.31.0     # OpenRouter / NVIDIA Nemotron

@@ -1,0 +1,1073 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>PromptSense Studio — Prompt Intelligence & LLM Benchmarking</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --card-border: #e2e8f0;
+            --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.04), 0 2px 4px -2px rgba(0, 0, 0, 0.03);
+            --card-shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.06), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+            --text: #0f172a;
+            --text-muted: #64748b;
+            --text-sub: #94a3b8;
+            --input-bg: #f1f5f9;
+            --input-border: #cbd5e1;
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --primary-light: #eef2ff;
+            --primary-border: #c7d2fe;
+            --refined-accent: #6366f1;
+            --refined-bg: #faf5ff;
+            --refined-border: #e9d5ff;
+            --success: #10b981;
+            --success-light: #ecfdf5;
+            --warning: #f59e0b;
+            --warning-light: #fffbeb;
+            --danger: #ef4444;
+            --danger-light: #fef2f2;
+            --code-bg: #0f172a;
+            --code-text: #f8fafc;
+            --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #0b0f19;
+                --card-bg: #131b2e;
+                --card-border: #1e293b;
+                --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+                --card-shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+                --text: #f1f5f9;
+                --text-muted: #94a3b8;
+                --text-sub: #64748b;
+                --input-bg: #0f172a;
+                --input-border: #334155;
+                --primary: #6366f1;
+                --primary-hover: #4f46e5;
+                --primary-light: rgba(99, 102, 241, 0.12);
+                --primary-border: #4338ca;
+                --refined-accent: #a855f7;
+                --refined-bg: #1a1528;
+                --refined-border: #581c87;
+                --success: #10b981;
+                --success-light: rgba(16, 185, 129, 0.12);
+                --warning: #f59e0b;
+                --warning-light: rgba(245, 158, 11, 0.12);
+                --danger: #ef4444;
+                --danger-light: rgba(239, 68, 68, 0.12);
+                --code-bg: #070b14;
+                --code-text: #e2e8f0;
+            }
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font-sans);
+            font-size: 14.5px;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            padding-bottom: 60px;
+        }
+
+        .container {
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 28px 24px;
+        }
+
+        /* Header */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .brand-logo {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--primary), #8b5cf6);
+            display: grid;
+            place-items: center;
+            color: white;
+            font-weight: 800;
+            font-size: 20px;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+        }
+
+        .brand h1 {
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            line-height: 1.2;
+        }
+
+        .brand p {
+            color: var(--text-muted);
+            font-size: 13px;
+            margin-top: 2px;
+        }
+
+        .header-pills {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .badge-pill {
+            font-size: 11.5px;
+            font-weight: 600;
+            padding: 4px 12px;
+            border-radius: 9999px;
+            background: var(--primary-light);
+            color: var(--primary);
+            border: 1px solid var(--primary-border);
+        }
+
+        /* Cards */
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 22px;
+            box-shadow: var(--card-shadow);
+            transition: box-shadow 0.2s ease, border-color 0.2s ease;
+        }
+
+        /* Input Card */
+        .input-card {
+            margin-bottom: 24px;
+            border-top: 4px solid var(--primary);
+        }
+
+        .input-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .input-label {
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+        }
+
+        /* Preset prompt chips */
+        .presets {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 14px;
+        }
+
+        .presets span {
+            font-size: 12px;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            font-weight: 600;
+            margin-right: 4px;
+        }
+
+        .preset-chip {
+            font-size: 12px;
+            background: var(--input-bg);
+            color: var(--text);
+            padding: 4px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--card-border);
+            cursor: pointer;
+            transition: all 0.15s ease;
+            user-select: none;
+        }
+
+        .preset-chip:hover {
+            background: var(--primary-light);
+            color: var(--primary);
+            border-color: var(--primary-border);
+            transform: translateY(-1px);
+        }
+
+        textarea#prompt {
+            width: 100%;
+            min-height: 100px;
+            background: var(--input-bg);
+            border: 1.5px solid var(--input-border);
+            border-radius: 12px;
+            padding: 14px 16px;
+            font-family: var(--font-sans);
+            font-size: 15px;
+            color: var(--text);
+            line-height: 1.5;
+            resize: vertical;
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+
+        textarea#prompt:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-light);
+        }
+
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-top: 16px;
+            padding-top: 14px;
+            border-top: 1px solid var(--card-border);
+        }
+
+        .toolbar-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .select-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .select-wrapper label {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        select#provider {
+            background: var(--input-bg);
+            color: var(--text);
+            border: 1.5px solid var(--input-border);
+            border-radius: 10px;
+            padding: 9px 14px;
+            font-size: 13.5px;
+            font-weight: 600;
+            cursor: pointer;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+
+        select#provider:focus {
+            border-color: var(--primary);
+        }
+
+        .action-btn {
+            background: linear-gradient(135deg, var(--primary), #6366f1);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 11px 26px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+            transition: all 0.18s ease;
+        }
+
+        .action-btn:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(79, 70, 229, 0.4);
+        }
+
+        .action-btn:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .action-btn:disabled {
+            opacity: 0.65;
+            cursor: wait;
+            box-shadow: none;
+        }
+
+        .shortcut-hint {
+            font-size: 11px;
+            opacity: 0.8;
+            font-weight: 500;
+            margin-left: 2px;
+        }
+
+        /* Error Box */
+        #err {
+            display: none;
+            margin-top: 14px;
+            color: var(--danger);
+            background: var(--danger-light);
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 13.5px;
+            border: 1px solid rgba(239, 68, 68, 0.25);
+        }
+
+        /* Summary Section */
+        #sum {
+            display: none;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 20px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .metric-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 14px;
+            padding: 18px 20px;
+            text-align: center;
+            box-shadow: var(--card-shadow);
+        }
+
+        .metric-title {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .metric-val {
+            font-size: 26px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .metric-delta {
+            font-size: 13px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 9999px;
+        }
+
+        .metric-delta.up {
+            background: var(--success-light);
+            color: var(--success);
+        }
+
+        .metric-delta.down {
+            background: var(--danger-light);
+            color: var(--danger);
+        }
+
+        .verdict-tag {
+            font-size: 18px;
+            font-weight: 800;
+        }
+
+        .verdict-tag.refined {
+            color: var(--primary);
+        }
+
+        .verdict-tag.original {
+            color: var(--warning);
+        }
+
+        .verdict-tag.tie {
+            color: var(--text-muted);
+        }
+
+        /* Judge Reason Card */
+        #judge-reason-box {
+            display: none;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-left: 4px solid var(--primary);
+            border-radius: 12px;
+            padding: 14px 18px;
+            margin-bottom: 22px;
+            box-shadow: var(--card-shadow);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .judge-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--primary);
+            margin-bottom: 6px;
+        }
+
+        #judge-reason-text {
+            font-size: 13.5px;
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        /* Comparison Grid */
+        #cols {
+            display: none;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            align-items: start;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .col {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 22px;
+            box-shadow: var(--card-shadow);
+        }
+
+        .col.refined-col {
+            border-color: var(--refined-border);
+            box-shadow: 0 4px 20px -2px rgba(168, 85, 247, 0.08);
+            position: relative;
+        }
+
+        .col-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .col-title {
+            font-size: 14px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .col.refined-col .col-title {
+            color: var(--refined-accent);
+        }
+
+        .col-badge {
+            font-size: 11px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 6px;
+            text-transform: uppercase;
+        }
+
+        .badge-orig {
+            background: var(--input-bg);
+            color: var(--text-muted);
+        }
+
+        .badge-refined {
+            background: var(--refined-bg);
+            color: var(--refined-accent);
+            border: 1px solid var(--refined-border);
+        }
+
+        .section-lbl {
+            font-size: 11.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin: 14px 0 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .copy-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-sub);
+            cursor: pointer;
+            font-size: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            transition: color 0.15s, background 0.15s;
+        }
+
+        .copy-btn:hover {
+            color: var(--primary);
+            background: var(--primary-light);
+        }
+
+        .content-box {
+            background: var(--input-bg);
+            border-radius: 10px;
+            padding: 13px 15px;
+            font-size: 14px;
+            line-height: 1.55;
+            white-space: pre-wrap;
+            word-break: break-word;
+            border: 1px solid var(--card-border);
+        }
+
+        .content-box.output-box {
+            max-height: 380px;
+            overflow-y: auto;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            padding: 14px;
+            font-size: 13.5px;
+        }
+
+        .content-box.output-box pre {
+            background: var(--code-bg);
+            color: var(--code-text);
+            font-family: var(--font-mono);
+            font-size: 13px;
+            padding: 12px 14px;
+            border-radius: 8px;
+            margin: 8px 0;
+            overflow-x: auto;
+            white-space: pre;
+        }
+
+        .content-box.output-box code {
+            font-family: var(--font-mono);
+            font-size: 12.5px;
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--primary);
+            padding: 2px 5px;
+            border-radius: 4px;
+        }
+
+        /* PQS Score Section */
+        .pqs-hero {
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+            margin: 12px 0 14px;
+        }
+
+        .pqs-hero .number {
+            font-size: 38px;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            line-height: 1;
+        }
+
+        .pqs-hero .denom {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        /* Progress bars */
+        .dim-bar {
+            display: grid;
+            grid-template-columns: 125px 1fr 34px;
+            align-items: center;
+            gap: 10px;
+            margin: 7px 0;
+            font-size: 12.5px;
+        }
+
+        .dim-name {
+            color: var(--text);
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .dim-track {
+            height: 8px;
+            background: var(--input-bg);
+            border-radius: 9999px;
+            overflow: hidden;
+        }
+
+        .dim-fill {
+            height: 100%;
+            border-radius: 9999px;
+            transition: width 0.4s ease;
+        }
+
+        .dim-val {
+            font-weight: 700;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            text-align: right;
+        }
+
+        /* Weak points & Recommendations */
+        .weak-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin: 10px 0;
+        }
+
+        .weak-chip {
+            background: var(--warning-light);
+            color: var(--warning);
+            border: 1px solid rgba(245, 158, 11, 0.25);
+            font-size: 11.5px;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 9999px;
+        }
+
+        .recs-list {
+            margin: 8px 0 14px;
+            padding-left: 18px;
+            font-size: 13px;
+            color: var(--text);
+        }
+
+        .recs-list li {
+            margin-bottom: 6px;
+        }
+
+        .recs-list b {
+            color: var(--primary);
+        }
+
+        .divider {
+            height: 1px;
+            background: var(--card-border);
+            margin: 18px 0;
+        }
+
+        .action-ghost {
+            background: var(--input-bg);
+            color: var(--text);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            padding: 5px 12px;
+            font-size: 12.5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .action-ghost:hover {
+            background: var(--primary-light);
+            color: var(--primary);
+            border-color: var(--primary-border);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(6px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 900px) {
+
+            #cols,
+            #sum {
+                grid-template-columns: 1fr;
+            }
+
+            .toolbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .action-btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <div class="brand">
+                <div class="brand-logo">⚡</div>
+                <div>
+                    <h1>PromptSense Studio</h1>
+                    <p>Dual-Pane Prompt Quality Analysis, Refinement &amp; Blind A/B LLM Evaluation</p>
+                </div>
+            </div>
+            <div class="header-pills">
+                <span class="badge-pill" id="live-model-pill">Model: Google Gemini</span>
+            </div>
+        </header>
+
+        <!-- Input Card -->
+        <div class="card input-card">
+            <div class="input-header">
+                <span class="input-label">Enter Prompt</span>
+            </div>
+
+            <!-- Quick Preset Chips -->
+            <div class="presets">
+                <span>Try:</span>
+                <div class="preset-chip" onclick="setPrompt('write python code to sort a list')">Sort a list (Python)
+                </div>
+                <div class="preset-chip" onclick="setPrompt('explain how photosynthesis works')">Photosynthesis</div>
+                <div class="preset-chip" onclick="setPrompt('write a python function to check if a number is prime')">
+                    Prime
+                    Checker</div>
+                <div class="preset-chip" onclick="setPrompt('explain what an api is in simple terms')">API in Simple
+                    Terms</div>
+                <div class="preset-chip"
+                    onclick="setPrompt('summarize the key differences between sql and nosql databases')">
+                    SQL vs NoSQL</div>
+            </div>
+
+            <textarea id="prompt"
+                placeholder="Type or paste any prompt here (e.g. 'write a python function for quicksort')..."></textarea>
+
+            <div class="toolbar">
+                <div class="toolbar-group">
+                    <div class="select-wrapper">
+                        <label for="provider">Model Provider</label>
+                        <select id="provider">
+                            <option value="gemini">Google Gemini</option>
+                            <option value="qwen" selected>Qwen: Qwen3.8 27B (free)</option>
+                            <option value="nemotron">NVIDIA Nemotron 3 Ultra (free)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button id="go" class="action-btn">
+                    <span>⚡ Analyze &amp; Run Benchmark</span>
+                    <span class="shortcut-hint">(Ctrl+Enter)</span>
+                </button>
+            </div>
+
+            <div id="err"></div>
+        </div>
+
+        <!-- Summary Metrics -->
+        <div id="sum">
+            <div class="metric-card">
+                <div class="metric-title">Prompt Quality (PQS)</div>
+                <div class="metric-val" id="sum-pqs">-</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-title">Judge Output Score / 5.0</div>
+                <div class="metric-val" id="sum-eval">-</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-title">Benchmark Verdict</div>
+                <div class="metric-val" id="sum-verdict">-</div>
+            </div>
+        </div>
+
+        <!-- Judge Reason Banner -->
+        <div id="judge-reason-box">
+            <div class="judge-header">
+                <span>⚖️ Blind A/B Judge Rationale</span>
+            </div>
+            <div id="judge-reason-text"></div>
+        </div>
+
+        <!-- Two-Column Side by Side -->
+        <div id="cols">
+            <!-- Left Column: Original Prompt -->
+            <div class="col" id="col-orig">
+                <div class="col-header">
+                    <span class="col-title">Original Prompt</span>
+                    <span class="col-badge badge-orig">Baseline</span>
+                </div>
+                <div id="content-orig"></div>
+            </div>
+
+            <!-- Right Column: Refined Prompt -->
+            <div class="col refined-col" id="col-ref">
+                <div class="col-header">
+                    <span class="col-title">PromptSense Refined</span>
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <button class="action-ghost" id="use-prompt-btn">Use as My Prompt</button>
+                        <span class="col-badge badge-refined">Optimized</span>
+                    </div>
+                </div>
+                <div id="content-ref"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const $ = s => document.querySelector(s);
+        const DIMS = [
+            ["clarity", "Clarity"],
+            ["specificity", "Specificity"],
+            ["context", "Context"],
+            ["task_definition", "Task Definition"],
+            ["constraints", "Constraints"],
+            ["ambiguity_noise", "Low Ambiguity"]
+        ];
+        const CRIT = [
+            ["relevance", "Relevance"],
+            ["clarity", "Clarity"],
+            ["completeness", "Completeness"],
+            ["instruction_adherence", "Instruction Adherence"],
+            ["overall_quality", "Overall Quality"]
+        ];
+
+        const esc = s => String(s || "").replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+        const md = s => {
+            if (!s) return "";
+            return esc(s)
+                .replace(/```(?:\w+)?\n([\s\S]*?)```/g, "<pre><code>$1</code></pre>")
+                .replace(/`([^`\n]+)`/g, "<code>$1</code>")
+                .replace(/\*\*([^*\n]+)\*\*/g, "<b>$1</b>");
+        };
+
+        function copyText(text, btn) {
+            navigator.clipboard.writeText(text).then(() => {
+                const orig = btn.innerHTML;
+                btn.innerHTML = "✓ Copied!";
+                setTimeout(() => btn.innerHTML = orig, 1800);
+            });
+        }
+
+        function setPrompt(text) {
+            $("#prompt").value = text;
+            $("#prompt").focus();
+        }
+
+        const getColor = (v, max) => {
+            const r = v / max;
+            if (r >= 0.75) return "var(--success)";
+            if (r >= 0.5) return "var(--warning)";
+            return "var(--danger)";
+        };
+
+        const renderBar = (label, score, rationale, max = 10) => `
+      <div class="dim-bar" ${rationale ? `title="${esc(rationale)}"` : ""}>
+        <span class="dim-name">${label}</span>
+        <div class="dim-track">
+          <div class="dim-fill" style="width:${(score / max) * 100}%; background:${getColor(score, max)}"></div>
+        </div>
+        <span class="dim-val">${score}</span>
+      </div>
+    `;
+
+        function renderColumn(targetEl, data, extra = {}) {
+            const a = data.analysis;
+            const e = data.eval;
+
+            let html = `
+        <div class="section-lbl">
+          <span>Prompt</span>
+          <button class="copy-btn" onclick="copyText(${JSON.stringify(data.prompt)}, this)">📋 Copy</button>
+        </div>
+        <div class="content-box">${esc(data.prompt)}</div>
+      `;
+
+            if (data.output != null) {
+                html += `
+          <div class="section-lbl">
+            <span>Model Output</span>
+            <button class="copy-btn" onclick="copyText(${JSON.stringify(data.output)}, this)">📋 Copy</button>
+          </div>
+          <div class="content-box output-box">${md(data.output)}</div>
+        `;
+            }
+
+            html += `
+        <div class="divider"></div>
+        <div class="section-lbl">
+          <span>Prompt Quality (PQS) · Task: ${esc(a.task.replace('_', ' '))}</span>
+        </div>
+        <div class="pqs-hero">
+          <span class="number" style="color:${getColor(a.pqs, 100)}">${a.pqs}</span>
+          <span class="denom">/ 100 PQS</span>
+        </div>
+
+        ${DIMS.map(([k, l]) => renderBar(l, a.scores[k].score, a.scores[k].rationale)).join("")}
+      `;
+
+            if (a.weak && a.weak.length > 0) {
+                html += `
+          <div class="weak-chips">
+            ${a.weak.map(w => `<span class="weak-chip">⚠️ Needs: ${esc(w.replace('_', ' '))}</span>`).join("")}
+          </div>
+        `;
+            }
+
+            if (extra.recs) {
+                html += extra.recs;
+            }
+
+            if (e) {
+                html += `
+          <div class="divider"></div>
+          <div class="section-lbl">
+            <span>Blind Judge Output Score</span>
+            <span style="font-weight:700;color:${getColor(e.overall, 5)}">${e.overall} / 5.0</span>
+          </div>
+          ${CRIT.map(([k, l]) => renderBar(l, e.scores[k], "", 5)).join("")}
+        `;
+            }
+
+            targetEl.innerHTML = html;
+        }
+
+        $("#provider").addEventListener("change", e => {
+            const selected = e.target.options[e.target.selectedIndex].text;
+            $("#live-model-pill").textContent = "Model: " + selected;
+        });
+
+        // Initialize pill
+        $("#live-model-pill").textContent = "Model: " + $("#provider").options[$("#provider").selectedIndex].text;
+
+        $("#go").onclick = async () => {
+            const btn = $("#go");
+            const err = $("#err");
+            err.style.display = "none";
+            const prompt = $("#prompt").value.trim();
+            if (!prompt) {
+                err.textContent = "Please enter a prompt.";
+                err.style.display = "block";
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = `<span>⏳ Evaluating &amp; Benchmarking...</span>`;
+
+            try {
+                const provider = $("#provider").value;
+                const res = await fetch("/api/run", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ prompt, provider })
+                });
+
+                const d = await res.json();
+                if (!res.ok) throw new Error(d.error || res.statusText);
+
+                const o = d.original;
+                const r = d.refined;
+                const dq = +(r.analysis.pqs - o.analysis.pqs).toFixed(1);
+
+                // Update Summary Bar
+                const sgn = n => (n > 0 ? "+" : "") + n;
+                const cls = n => (n > 0 ? "up" : n < 0 ? "down" : "");
+
+                const pqsHtml = `
+          <span>${o.analysis.pqs} → ${r.analysis.pqs}</span>
+          <span class="metric-delta ${cls(dq)}">${sgn(dq)}</span>
+        `;
+                $("#sum-pqs").innerHTML = pqsHtml;
+
+                if (d.outputs && o.eval && r.eval) {
+                    const evalDelta = +(r.eval.overall - o.eval.overall).toFixed(2);
+                    $("#sum-eval").innerHTML = `
+            <span>${o.eval.overall} → ${r.eval.overall}</span>
+            <span class="metric-delta ${cls(evalDelta)}">${sgn(evalDelta)}</span>
+          `;
+
+                    const verdictLabel = {
+                        refined: "Refined Wins 🎉",
+                        original: "Original Wins",
+                        tie: d.unchanged ? "Already Optimal ✓" : "Tie 🤝"
+                    }[d.winner] || "Evaluated";
+
+                    $("#sum-verdict").innerHTML = `<span class="verdict-tag ${d.winner}">${verdictLabel}</span>`;
+                } else {
+                    $("#sum-eval").innerHTML = `<span>N/A</span>`;
+                    $("#sum-verdict").innerHTML = `<span class="verdict-tag tie">${d.unchanged ? "Already Optimal" : "PQS Analyzed"}</span>`;
+                }
+
+                $("#sum").style.display = "grid";
+
+                // Judge Reason
+                if (d.reason) {
+                    $("#judge-reason-text").textContent = d.reason;
+                    $("#judge-reason-box").style.display = "block";
+                } else {
+                    $("#judge-reason-box").style.display = "none";
+                }
+
+                // Recommendations HTML
+                const recsHtml = d.recommendations && d.recommendations.length > 0
+                    ? `
+            <div class="section-lbl"><span>Recommendations</span></div>
+            <ul class="recs-list">
+              ${d.recommendations.map(x => `<li><b>${esc(x.dimension.replace('_', ' '))}:</b> ${esc(x.advice)}</li>`).join("")}
+            </ul>
+          `
+                    : "";
+
+                // Render Columns
+                renderColumn($("#content-orig"), o, { recs: recsHtml });
+                renderColumn($("#content-ref"), r);
+
+                $("#cols").style.display = "grid";
+
+                // "Use as my prompt" click handler
+                $("#use-prompt-btn").onclick = () => {
+                    $("#prompt").value = r.prompt;
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                };
+
+            } catch (e) {
+                err.textContent = e.message;
+                err.style.display = "block";
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<span>⚡ Analyze &amp; Run Benchmark</span><span class="shortcut-hint">(Ctrl+Enter)</span>`;
+            }
+        };
+
+        $("#prompt").addEventListener("keydown", e => {
+            if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+                $("#go").click();
+            }
+        });
+    </script>
+</body>
+
+</html>
+
+</html>

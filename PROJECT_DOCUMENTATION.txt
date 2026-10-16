@@ -1,0 +1,463 @@
+================================================================================
+                     PROMPTSENSE STUDIO — COMPLETE PROJECT GUIDE
+                End-to-End Architecture, Workflow & File-by-File Details
+================================================================================
+
+TABLE OF CONTENTS:
+1. Project Overview & Core Purpose
+2. End-to-End System Workflow (Step-by-Step)
+3. Scoring Mechanics (PQS Formula & Blind A/B Rubric)
+4. Comprehensive File-by-File Technical Breakdown
+   - Root Directory Files
+     * app.py
+     * judge.py
+     * .env
+     * requirements.txt
+     * README.md
+     * static/index.html
+   - Core Package (promptsense/) Files
+     * promptsense/__init__.py
+     * promptsense/__main__.py
+     * promptsense/cli.py
+     * promptsense/models.py
+     * promptsense/preprocess.py
+     * promptsense/task.py
+     * promptsense/scoring.py
+     * promptsense/recommend.py
+     * promptsense/refine.py
+     * promptsense/evaluator.py
+     * promptsense/llm.py
+     * promptsense/pipeline.py
+5. Supported LLM Providers & API Key Routing
+6. Execution & Deployment Guide
+
+
+================================================================================
+1. PROJECT OVERVIEW & CORE PURPOSE
+================================================================================
+PromptSense Studio is a full-stack, research-grade prompt intelligence and 
+benchmarking application.
+
+Core Objectives:
+1. Prompt Quality Scoring (PQS): Heuristically evaluate any prompt on a 0 to 100
+   scale across six foundational prompt engineering dimensions without requiring
+   an expensive LLM call for the scoring itself.
+2. Intelligent Intent-Preserving Refinement: Automatically rewrite weak or 
+   underspecified prompts into highly structured, actionable prompts while 
+   preserving the user's ground-truth intent (never hallucinating facts or 
+   altering the user's objective).
+3. Side-by-Side Dual-Model Execution: Run both the raw user prompt and the 
+   PromptSense-refined prompt in parallel using advanced LLMs (Google Gemini, 
+   Qwen 3.8 27B, or NVIDIA Nemotron 3 Ultra).
+4. Blind A/B LLM Evaluation: Employ an impartial judge prompt that evaluates 
+   both candidate outputs strictly against the original user task on a 1-to-5 
+   scale across five criteria, eliminating position and length biases.
+
+
+================================================================================
+2. END-TO-END SYSTEM WORKFLOW (STEP-BY-STEP)
+================================================================================
+When a user types a prompt into the web interface and clicks "Analyze & Run":
+
+[Step 1: Frontend Submission]
+- The user enters a prompt (or picks a preset chip) in static/index.html.
+- The user selects a model provider (Google Gemini, Qwen 3.8 27B, or 
+  NVIDIA Nemotron 3 Ultra).
+- The browser dispatches an asynchronous HTTP POST request to /api/run with:
+  {"prompt": "<user text>", "provider": "<gemini|qwen|nemotron>"}.
+
+[Step 2: Flask Routing & LLM Adapter Creation]
+- app.py receives the request.
+- make_llm(provider, model, key) initializes the appropriate client:
+  * GeminiClient -> Google GenAI SDK (gemini-3.5-flash-lite).
+  * QwenClient -> OpenRouter Chat Completions (qwen/qwen3.8-27b).
+  * NemotronClient -> OpenRouter Chat Completions (nvidia/nemotron-3-ultra-550b-a55b).
+  * DemoLLM -> Mock client if no keys or demo requested.
+
+[Step 3: Text Normalization]
+- preprocess.py cleans the input: NFKC unicode normalization, stripping zero-width 
+  characters, normalizing line breaks and excess whitespaces.
+
+[Step 4: Task Intent Classification]
+- task.py evaluates the normalized text against conservative regex patterns to 
+  classify the task category:
+  (code_generation, explanation, summarization, translation, classification, 
+   extraction, analysis, planning, creative_writing, or general).
+
+[Step 5: Heuristic 6-Dimension Scoring]
+- scoring.py analyzes the normalized text and computes scores (0 to 10) for:
+  1. Clarity
+  2. Specificity
+  3. Context
+  4. Task Definition
+  5. Constraints
+  6. Low Ambiguity / Noise
+- Dimensions with scores below threshold (default 6.0) are flagged as weak.
+- The overall Prompt Quality Score (PQS, 0-100) is calculated as a weighted sum.
+
+[Step 6: Targeted Recommendations]
+- recommend.py inspects the weak dimensions and the detected task to assemble 
+  actionable, plain-English advice and task-specific tips.
+
+[Step 7: Prompt Refinement]
+- refine.py rewrites the prompt:
+  * If LLM refiner is enabled (default for real models): Uses a master prompt 
+    instructing the model to produce ONE improved prompt that directly addresses 
+    the detected weak dimensions without altering intent, scope, or adding placeholders.
+  * Fallback / Rule-based refiner: Uses deterministic pattern-based enhancements 
+    if the LLM is unavailable or produces invalid output.
+
+[Step 8: Re-scoring the Refined Prompt]
+- scoring.py scores the refined prompt with the exact same deterministic rubric 
+  to compute the new PQS score and calculate delta change (+X.X).
+
+[Step 9: Parallel Model Execution]
+- If SHOW_OUTPUTS is True (enabled by default):
+  app.py uses a ThreadPoolExecutor(max_workers=2) to query the chosen LLM in 
+  parallel with:
+  1. Original user prompt -> Output A
+  2. Refined prompt -> Output B
+  (If the prompt was already optimal and unchanged, the query is made once).
+
+[Step 10: Blind A/B Judge Evaluation]
+- judge.py runs an impartial A/B evaluation:
+  * The order of the two candidate outputs is randomized (50/50 A vs B) to prevent 
+    positional bias.
+  * The judge LLM evaluates both answers strictly against the ORIGINAL USER TASK 
+    (ground truth principle) across 5 criteria (Relevance, Clarity, Completeness, 
+    Instruction Adherence, Overall Quality) on a 1 to 5 integer scale.
+  * Output names are mapped back, delta is computed, and the winner is determined 
+    ("refined", "original", or "tie").
+
+[Step 11: Frontend Visualization]
+- The backend packages the results into a comprehensive JSON payload.
+- static/index.html updates the DOM:
+  * Metric summary cards (PQS delta, Judge delta, Verdict).
+  * Blind Judge reasoning banner.
+  * Side-by-side comparison panels with syntax-highlighted code, copy buttons, 
+    dimension progress bars, weakness chips, recommendations, and output scores.
+
+
+================================================================================
+3. SCORING MECHANICS (PQS FORMULA & BLIND A/B RUBRIC)
+================================================================================
+
+A. PROMPT QUALITY SCORE (PQS):
+Formula:
+  PQS = 10 * [ 
+      (Clarity * 0.20) + 
+      (Specificity * 0.20) + 
+      (Context * 0.15) + 
+      (Task_Definition * 0.20) + 
+      (Constraints * 0.15) + 
+      (Low_Ambiguity * 0.10) 
+  ]
+Scale: 0 to 100 points.
+
+Dimension Definitions (0 to 10 each):
+1. Clarity (Weight: 20%): Evaluates sentence structure and average words per 
+   sentence (5-35 words ideal; penalties for <4 or >50 words).
+2. Specificity (Weight: 20%): Evaluates concrete detail signals: numbers, quoted 
+   targets, named deliverables, adequate length, penalizing vague descriptors.
+3. Context (Weight: 15%): Detects audience, background, or purpose markers 
+   (e.g., "for beginners", "so that", "our team"). Not penalized for simple 
+   questions where background is naturally unnecessary.
+4. Task Definition (Weight: 20%): Rewards explicit action verbs ("write", 
+   "explain", "implement") and deliverable specifications ("function", "table", "summary").
+5. Constraints (Weight: 15%): Checks for format requirements (JSON, markdown, table), 
+   length constraints (word/paragraph counts), style/tone directives, and must/avoid rules.
+6. Low Ambiguity / Noise (Weight: 10%): Scored from 9.0 downwards, penalizing vague 
+   words ("stuff", "thing", "nice"), filler tokens ("basically", "pls"), and hedging phrases.
+
+B. BLIND A/B OUTPUT JUDGE RUBRIC (1 to 5 scale each):
+1. Relevance: Directness in addressing the core task without drifting.
+2. Clarity: Organization, readability, and logical flow of the response.
+3. Completeness: Coverage of the necessary components requested in the ORIGINAL task.
+   (Concise, correct answers earn 4 or 5; no penalization for omitting unprompted extras).
+4. Instruction Adherence: Conformance with explicit constraints, language, and format.
+5. Overall Quality: Holistic utility, correctness, and practical usability.
+
+
+================================================================================
+4. COMPREHENSIVE FILE-BY-FILE TECHNICAL BREAKDOWN
+================================================================================
+
+--------------------------------------------------------------------------------
+ROOT DIRECTORY FILES
+--------------------------------------------------------------------------------
+
+1. app.py
+   - Path: ./app.py
+   - Purpose: Main application server and REST API built with Flask.
+   - Key Responsibilities:
+     * Reads environment variables from .env via _load_dotenv().
+     * Implements adapter classes satisfying the LLMClient protocol:
+       - GeminiClient: Wraps the official google.genai SDK for Gemini models.
+       - OpenRouterClient: Base adapter for OpenRouter's HTTP Chat Completions API.
+         Handles authentication, timeout (120s), JSON extraction, and automatically
+         configures {"reasoning": {"effort": "none"}} to prevent reasoning tokens
+         from exhausting the max_tokens completion budget.
+       - QwenClient: Inherits from OpenRouterClient, defaulting to "qwen/qwen3.8-27b".
+         Reads QWEN_API_KEY, OPENROUTER_QWEN_API_KEY, or OPENROUTER_API_KEY.
+       - NemotronClient: Inherits from OpenRouterClient, defaulting to 
+         "nvidia/nemotron-3-ultra-550b-a55b". Reads NEMOTRON_API_KEY, 
+         OPENROUTER_NEMOTRON_API_KEY, or OPENROUTER_API_KEY.
+       - DemoLLM: Mock client for testing without active API keys.
+     * make_llm(provider, model, key): Factory function routing provider strings 
+       ("gemini", "qwen", "nemotron") to the correct client instance.
+     * Web routes:
+       - GET /: Serves static/index.html with no-cache headers (max_age=0).
+       - POST /api/run: Receives user prompt and model provider; runs PromptSense 
+         analysis and refinement; executes parallel output generation via 
+         ThreadPoolExecutor; invokes judge_pair() for blind A/B evaluation; 
+         returns JSON report.
+     * Global Configuration:
+       - SHOW_OUTPUTS = True: Controls whether full answers and judge scores are run.
+       - ANSWER_TOKENS = 1000: Max token cap for model answers.
+
+2. judge.py
+   - Path: ./judge.py
+   - Purpose: Blind A/B output evaluator ported from research notebooks.
+   - Key Responsibilities:
+     * Defines RUBRIC_TEXT, EVALUATOR_INSTRUCTIONS, and CATEGORY_GUIDANCE.
+     * judge_pair(llm, original_prompt, task, out_original, out_refined, tries=3):
+       - Randomly assigns Output A and Output B (50/50 coin toss).
+       - Prompts the LLM judge with EVALUATOR_INSTRUCTIONS, strict bias controls, 
+         the rubric, task-specific guidance, the original user request, and the two answers.
+       - Requires response strictly formatted as JSON:
+         {"response_a": {...}, "response_b": {...}, "evaluation_reason": "..."}.
+       - Retries up to 3 times on malformed JSON or out-of-bounds scores.
+       - Maps scores back to "Original" and "Refined", replacing anonymized references.
+
+3. .env
+   - Path: ./.env
+   - Purpose: Local configuration file containing private API keys and defaults.
+   - Supported Keys:
+     * QWEN_API_KEY: Dedicated OpenRouter key for Qwen 3.8.
+     * NEMOTRON_API_KEY: Dedicated OpenRouter key for NVIDIA Nemotron 3 Ultra.
+     * OPENROUTER_API_KEY: Shared fallback key for all OpenRouter models.
+     * GEMINI_API_KEY: Google Gemini API key.
+     * PROMPTSENSE_PROVIDER: Default provider (e.g. "qwen", "nemotron", "gemini").
+     * QWEN_MODEL: Override model string (default: "qwen/qwen3.8-27b").
+     * NEMOTRON_MODEL: Override model string (default: "nvidia/nemotron-3-ultra-550b-a55b").
+
+4. requirements.txt
+   - Path: ./requirements.txt
+   - Purpose: Lists required third-party Python packages:
+     * flask: Lightweight web server framework.
+     * requests: HTTP library for OpenRouter API calls.
+     * google-genai: Google's official Gemini GenAI SDK.
+
+5. README.md
+   - Path: ./README.md
+   - Purpose: Documentation for running and configuring the repository.
+   - Contents: Run commands, environment variable setup, supported models overview.
+
+6. static/index.html
+   - Path: ./static/index.html
+   - Purpose: Complete single-page frontend application (HTML5, CSS3, ES6 JavaScript).
+   - Key Features:
+     * Plus Jakarta Sans & JetBrains Mono typography with native Dark/Light theme.
+     * Quick-start prompt chips for instant benchmarking.
+     * Textarea with keyboard shortcut (Ctrl+Enter).
+     * Provider selection dropdown with live status indicator pill.
+     * Summary dashboard displaying PQS delta, Output delta, and benchmark verdict.
+     * Judge Rationale card explaining the score difference.
+     * Dual-pane comparison columns (Original vs. Refined):
+       - Content boxes with one-click "Copy" buttons.
+       - Markdown code rendering with syntax container styling.
+       - Colored PQS dimension progress bars with tooltips.
+       - Weakness tags ("Needs: ...") and recommendation lists.
+       - Output evaluation score breakdown (Relevance, Clarity, Completeness, etc.).
+       - "Use as My Prompt" button to copy refined prompt into the input field.
+
+--------------------------------------------------------------------------------
+CORE PACKAGE (promptsense/) FILES
+--------------------------------------------------------------------------------
+
+7. promptsense/__init__.py
+   - Path: ./promptsense/__init__.py
+   - Purpose: Initializes the promptsense Python package.
+   - Exports:
+     * PromptSense (main pipeline class)
+     * Report, Analysis (core data models)
+     * __version__ = "0.2.0"
+
+8. promptsense/__main__.py
+   - Path: ./promptsense/__main__.py
+   - Purpose: Package CLI entrypoint.
+   - Behavior: Allows execution via `python -m promptsense`. Calls cli.main().
+
+9. promptsense/cli.py
+   - Path: ./promptsense/cli.py
+   - Purpose: Command Line Interface for PromptSense.
+   - Features:
+     * Arguments: prompt string, -f/--file, --llm (none|mock), --model, --evaluate, 
+       --llm-scoring, --llm-refiner, --llm-judge, --threshold, --json.
+     * format_report(report): Formats results into clean terminal ASCII tables.
+
+10. promptsense/models.py
+    - Path: ./promptsense/models.py
+    - Purpose: Data contracts and dataclass definitions used throughout the package.
+    - Key Classes & Constants:
+      * DIMENSIONS: Tuple of the 6 dimensions ("clarity", "specificity", "context", 
+        "task_definition", "constraints", "ambiguity_noise").
+      * WEIGHTS: Dict mapping dimensions to float weights summing to 1.0.
+      * DimensionScore: Stores (name: str, score: float, rationale: str).
+      * Analysis: Stores (original, normalized, task, scores dict, quality_score, 
+        weak_dimensions list, weaknesses list).
+      * Recommendation: Stores (dimension: str, advice: str).
+      * OutputEvaluation: Stores (label, output, scores dict, overall float).
+      * Comparison: Stores (original, refined, delta, winner).
+      * Report: Master container bundling Analysis, recommendations, refined_prompt, 
+        refined_quality_score, and optional Comparison. Provides to_dict().
+
+11. promptsense/preprocess.py
+    - Path: ./promptsense/preprocess.py
+    - Purpose: String cleaning, text normalization, and lexical segmentation.
+    - Key Functions:
+      * normalize(text): Applies NFKC normalization, removes zero-width invisible 
+        characters, normalizes \r\n to \n, compresses duplicate spaces and excess newlines.
+      * split_sentences(text): Regex sentence splitter on punctuation (. ! ?) and newlines.
+      * tokenize(text): Extracts alphanumeric tokens including technical characters (+, #, ., -, /).
+
+12. promptsense/task.py
+    - Path: ./promptsense/task.py
+    - Purpose: Rule-based task category classifier.
+    - Key Mechanisms:
+      * TASK_PATTERNS: Ordered list of regular expressions identifying 10 intent categories:
+        1. creative_writing (story, poem, essay, slogan)
+        2. code_generation (write function, implement, debug, python, sql)
+        3. summarization (summarize, tldr, recap)
+        4. translation (translate)
+        5. classification (classify, categorize, sentiment)
+        6. extraction (extract, parse, list all)
+        7. analysis (analyze, compare, pros and cons)
+        8. planning (plan, schedule, roadmap)
+        9. explanation (explain, what is, why, how does)
+        10. question_answering (trailing question mark)
+      * detect_task(text): Iterates through patterns and returns matched task name 
+        or "general".
+
+13. promptsense/scoring.py
+    - Path: ./promptsense/scoring.py
+    - Purpose: Deterministic, conservative prompt quality analyzer (PQS engine).
+    - Key Functions:
+      * find_vague(text) & find_filler(text): Detect vague words ("stuff", "things", 
+        "nice") and filler tokens ("basically", "actually", "pls").
+      * _clarity(text, words, sents): Evaluates sentence length and structure.
+      * _specificity(text, words, sents): Checks for concrete numbers, quotes, named deliverables.
+      * _context(text, words, sents, task): Checks for audience, purpose, and background signals.
+      * _task_definition(text, words, task): Verifies presence of action verbs and deliverables.
+      * _constraints(text, words, task): Checks for formatting, length caps, and rule constraints.
+      * _ambiguity(raw, text, words): Penalizes vague words, filler, and hedging phrases.
+      * analyze(text, llm=None, threshold=6.0): Orchestrates normalization, task detection, 
+        calculates weighted quality_score (0-100), identifies weak_dimensions (< threshold), 
+        and returns an Analysis object.
+
+14. promptsense/recommend.py
+    - Path: ./promptsense/recommend.py
+    - Purpose: Generates actionable advice tailored to prompt weaknesses and detected task.
+    - Key Mappings:
+      * ADVICE: Prescriptive guidelines for each of the 6 dimensions.
+      * TASK_TIPS: Domain-specific suggestions (e.g. specifying input/output types for coding, 
+        or source and audience for summarization).
+      * recommend(analysis): Compiles recommendation list highlighting specific detected 
+        vague/filler tokens.
+
+15. promptsense/refine.py
+    - Path: ./promptsense/refine.py
+    - Purpose: Dual-mode prompt refinement engine.
+    - Key Mechanisms:
+      * refine_with_rules(analysis): Fast, deterministic pattern-based prompt enhancement 
+        that appends direct instructions, constraints, or format rules without LLM dependencies.
+      * MASTER_PROMPT & MASTER_SYSTEM: Comprehensive prompt engineering framework for LLM refiners. 
+        Enforces 6 hard criteria (clarity, specificity, general context, action verbs, soft constraints, 
+        low ambiguity) while strictly prohibiting altered scope, questions, or added placeholders.
+      * refine(analysis, llm=None, recommendations=None): Invokes LLM refiner if provided; 
+        verifies output validity and length sanity; falls back to refine_with_rules() if needed.
+
+16. promptsense/evaluator.py
+    - Path: ./promptsense/evaluator.py
+    - Purpose: Internal comparison module for self-contained PromptSense evaluations.
+    - Components:
+      * HeuristicJudge: Computes keyword overlap, token volume, markdown structure markers, 
+        and word limit compliance.
+      * LLMJudge: LLM-assisted judge scoring 0-10 on relevance, completeness, structure, and adherence.
+      * compare(llm, original, refined, judge): Runs both prompts and determines the winner based on margin.
+
+17. promptsense/llm.py
+    - Path: ./promptsense/llm.py
+    - Purpose: LLM protocol abstraction and parsing helpers.
+    - Components:
+      * LLMClient(Protocol): Formal Python Protocol requiring complete(prompt, system=None, max_tokens=1024) -> str.
+      * MockLLM: Deterministic offline mock implementation returning simulated responses.
+      * extract_json(text): Robust regex extractor that parses JSON objects enclosed in { ... } 
+        even if surrounding text contains commentary or code blocks.
+
+18. promptsense/pipeline.py
+    - Path: ./promptsense/pipeline.py
+    - Purpose: Main pipeline coordinator orchestrating the full PromptSense flow.
+    - PromptSense Class:
+      * __init__(llm=None, use_llm_scoring=False, use_llm_refiner=False, use_llm_judge=False, threshold=6.0): 
+        Configures enabled pipeline components.
+      * run(prompt: str, evaluate: bool = False) -> Report:
+        1. Validates input.
+        2. Calls analyze(prompt).
+        3. Calls recommend(analysis).
+        4. Calls refine(analysis, llm, recs).
+        5. Computes refined prompt PQS score.
+        6. Optionally executes compare() if evaluate=True.
+        7. Returns complete Report object.
+
+
+================================================================================
+5. SUPPORTED LLM PROVIDERS & API KEY ROUTING
+================================================================================
+
+1. Qwen 3.8 27B (Free via OpenRouter)
+   - Model String: "qwen/qwen3.8-27b"
+   - Provider Endpoint: https://openrouter.ai/api/v1/chat/completions
+   - API Key Priority: QWEN_API_KEY -> OPENROUTER_QWEN_API_KEY -> OPENROUTER_API_KEY
+   - Reasoning Control: reasoning effort set to "none" for fast execution and zero token truncation.
+
+2. NVIDIA Nemotron 3 Ultra (Free via OpenRouter)
+   - Model String: "nvidia/nemotron-3-ultra-550b-a55b"
+   - Provider Endpoint: https://openrouter.ai/api/v1/chat/completions
+   - API Key Priority: NEMOTRON_API_KEY -> OPENROUTER_NEMOTRON_API_KEY -> OPENROUTER_API_KEY
+   - Reasoning Control: reasoning effort set to "none" for direct output.
+
+3. Google Gemini
+   - Model String: "gemini-3.5-flash-lite" (or via GEMINI_MODEL)
+   - Provider SDK: google.genai
+   - API Key: GEMINI_API_KEY
+
+
+================================================================================
+6. EXECUTION & DEPLOYMENT GUIDE
+================================================================================
+
+A. Installing Dependencies:
+   pip install -r requirements.txt
+
+B. Setting API Keys in .env:
+   Create a .env file in the project root with your keys:
+   ```text
+   QWEN_API_KEY=sk-or-v1-your_qwen_key_here
+   NEMOTRON_API_KEY=sk-or-v1-your_nemotron_key_here
+   OPENROUTER_API_KEY=sk-or-v1-your_shared_key_here
+   GEMINI_API_KEY=your_gemini_key_here
+   PROMPTSENSE_PROVIDER=qwen
+   ```
+
+C. Running the Web Studio:
+   python app.py
+   Open your browser to: http://127.0.0.1:5000
+
+D. Running the Terminal CLI:
+   python -m promptsense "write a python function to check if a number is prime"
+
+================================================================================
+                           END OF DOCUMENTATION
+================================================================================
+
