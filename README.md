@@ -6,25 +6,25 @@
 
 ## Features
 
-- ** Prompt Quality Scoring (PQS, 0–100)**: Instant heuristic evaluation across 6 core prompt engineering dimensions without requiring slow or expensive LLM calls:
+- **Prompt Quality Scoring (PQS, 0–100)**: Instant heuristic evaluation across 6 core prompt engineering dimensions without requiring slow or expensive LLM calls:
   - **Clarity**: Directness, readability, and sentence flow.
   - **Specificity**: Concrete details, parameters, and entities.
   - **Context**: Domain background, persona, and situational framing.
   - **Task Definition**: Actionable verbs and clear deliverable definition.
   - **Constraints**: Format, length, styling, and behavioral rules.
   - **Low Ambiguity**: Absence of vague qualifiers or conflicting instructions.
-- ** Intent-Preserving Refinement**: Automatically strengthens weak dimensions while strictly preserving your ground-truth intent (no hallucinated requirements or altered objectives).
-- ** Side-by-Side Model Execution**: Executes both the original prompt and the refined prompt in parallel using high-performance LLMs.
-- ** Blind A/B LLM Judge**: Evaluates both generated answers against your original request using randomized positions and explicit bias controls (no length or formatting bias) across five criteria:
+- **Intent-Preserving Refinement**: Automatically strengthens weak dimensions while strictly preserving your ground-truth intent (no hallucinated requirements or altered objectives).
+- **Side-by-Side Model Execution**: Executes both the original prompt and the refined prompt in parallel using high-performance LLMs.
+- **Blind A/B LLM Judge**: Evaluates both generated answers against your original request using randomized positions and explicit bias controls (no length or formatting bias) across five criteria:
   - *Relevance*, *Clarity*, *Completeness*, *Instruction Adherence*, and *Overall Quality* (1–5 scale).
-- ** Multi-Model & Multi-Provider Support**:
+- **Multi-Model & Multi-Provider Support**:
   - **Google Gemini** (via `google-genai` SDK, defaults to `gemini-3.5-flash-lite`).
   - **Qwen 3.8 27B** (via OpenRouter).
   - **NVIDIA Nemotron 3 Ultra** (via OpenRouter).
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### 1. Clone & Install Dependencies
 
